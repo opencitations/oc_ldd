@@ -247,9 +247,9 @@ class ContentNegotiation:
 
 class IndexContentNegotiation(ContentNegotiation):
     def __init__(self):
-        ContentNegotiation.__init__(self, c["index_base_url"], c["index_local_url"],
+        ContentNegotiation.__init__(self, env_config["index_base_url"], c["index_local_url"],
                                     context_path=c["ocdm_json_context_path"],
-                                    from_triplestore=c["sparql_endpoint_index"],
+                                    from_triplestore=env_config["sparql_endpoint_index"],
                                     label_func=lambda u: "oci:%s" % re.findall(
                                         "^.+/ci/(.+)$", u)[0]
                                     if "/ci/" in u else "provenance agent 1" if "/pa/1" in u
@@ -257,9 +257,9 @@ class IndexContentNegotiation(ContentNegotiation):
 
 class MetaContentNegotiation(ContentNegotiation):
     def __init__(self):
-        ContentNegotiation.__init__(self, c["index_base_url"], c["meta_local_url"],
+        ContentNegotiation.__init__(self, env_config["index_base_url"], c["meta_local_url"],
                                     context_path=c["ocdm_json_context_path"],
-                                    from_triplestore=c["sparql_endpoint_meta"],
+                                    from_triplestore=env_config["sparql_endpoint_meta"],
                                     label_func=lambda u: "%s %s" % re.findall("^.+/meta/(..)/(.+)$", u)[0])
 
 
