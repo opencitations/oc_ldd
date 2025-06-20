@@ -234,7 +234,6 @@ class SparqlMeta(Sparql):
         web.header('Access-Control-Allow-Headers', 'Authorization')
 
     def GET(self, dataset, call):
-        validateAccessToken()
         man = None
 
         if dataset == "":
