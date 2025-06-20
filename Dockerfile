@@ -7,7 +7,8 @@ ENV BASE_URL="ldd.opencitations.net" \
     LOG_DIR="/mnt/log_dir/oc_ldd"  \
     SPARQL_ENDPOINT_INDEX="http://qlever-service.default.svc.cluster.local:7011" \
     SPARQL_ENDPOINT_META="http://virtuoso-service.default.svc.cluster.local:8890/sparql" \
-    SYNC_ENABLED="true"
+    SYNC_ENABLED="true" \
+    INDEX_BASE_URL="https://w3id.org/oc"
 
 # Install system dependencies required for Python package compilation
 # We clean up apt cache after installation to reduce image size
