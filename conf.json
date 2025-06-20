@@ -5,7 +5,6 @@
   "base_url": "ldd.opencitations.net",
   "sparql_endpoint_index": "https://sparql.opencitations.net/index",
   "sparql_endpoint_meta": "https://sparql.opencitations.net/meta",
-
   "index_base_url": "https://w3id.org/oc",
   "index_base_path": "./src/data/index/",
   "index_local_url": "/index/",

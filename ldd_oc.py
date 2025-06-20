@@ -44,7 +44,6 @@ active = {
     "oci": "tools",
     "intrepid": "tools",
     "api": "querying",
-    "api": "querying",
     "search": "querying"
 }
 
@@ -218,101 +217,6 @@ class SparqlMeta(Sparql):
         Sparql.__init__(self, env_config["sparql_endpoint_meta"],
                        "meta", "/sparql/meta")
 
-       
-
-    def OPTIONS(self, dataset, call):
-        # remember to remove the slash at the end
-        org_ref = web.ctx.env.get('HTTP_REFERER')
-        if org_ref is not None:
-            org_ref = org_ref[:-1]
-        else:
-            org_ref = "*"
-
-        web.header('Access-Control-Allow-Origin', org_ref)
-        web.header('Access-Control-Allow-Credentials', 'true')
-        web.header('Access-Control-Allow-Methods', '*')
-        web.header('Access-Control-Allow-Headers', 'Authorization')
-
-    def GET(self, dataset, call):
-        man = None
-
-        if dataset == "":
-            raise web.redirect("/")
-
-        elif dataset == "index":
-            man = index_api_manager
-            doc = index_doc_manager
-            if "v2" in call:
-                man = index_api_manager_v2
-                doc = index_doc_manager_v2
-        elif dataset == "meta":
-            man = meta_api_manager
-            doc = meta_doc_manager
-
-
-        if man is None:
-            raise web.notfound()
-        else:
-            if re.match("^/v[1-9]*/?$", call):
-                # remember to remove the slash at the end
-                org_ref = web.ctx.env.get('HTTP_REFERER')
-                if org_ref is not None:
-                    org_ref = org_ref[:-1]
-                else:
-                    org_ref = "*"
-
-                web.header('Access-Control-Allow-Origin', org_ref)
-                web.header('Access-Control-Allow-Credentials', 'true')
-                web.header('Content-Type', "text/html")
-                web.header('Access-Control-Allow-Methods', '*')
-                web.header('Access-Control-Allow-Headers', 'Authorization')
-                web_logger.mes()
-                return doc.get_documentation()[1]
-            else:
-                content_type = web.ctx.env.get('HTTP_ACCEPT')
-                if content_type is not None and "text/csv" in content_type:
-                    content_type = "text/csv"
-                else:
-                    content_type = "application/json"
-
-                operation_url = call + unquote(web.ctx.query)
-                op = man.get_op(operation_url)
-
-                if type(op) is Operation:
-                    status_code, res, c_type = op.exec(
-                        content_type=content_type)
-                    if status_code == 200:
-                        # remember to remove the slash at the end
-                        org_ref = web.ctx.env.get('HTTP_REFERER')
-                        if org_ref is not None:
-                            org_ref = org_ref[:-1]
-                        else:
-                            org_ref = "*"
-
-                        web.header('Access-Control-Allow-Origin', org_ref)
-                        web.header('Access-Control-Allow-Credentials', 'true')
-                        web.header('Content-Type', c_type)
-                        web.header('Access-Control-Allow-Methods', '*')
-                        web.header('Access-Control-Allow-Headers',
-                                   'Authorization')
-                        web_logger.mes()
-                        return res
-                    else:
-                        try:
-                            with StringIO(res) as f:
-                                if content_type == "text/csv":
-                                    mes = next(csv.reader(f))[0]
-                                else:
-                                    mes = json.dumps(
-                                        next(csv.DictReader(f)), ensure_ascii=False)
-                            raise web.HTTPError(
-                                str(status_code)+" ", {"Content-Type": content_type}, mes)
-                        except:
-                            raise web.HTTPError(
-                                str(status_code)+" ", {"Content-Type": content_type}, str(res))
-                else:
-                    raise web.HTTPError(
-                        "404 ", {"Content-Type": content_type}, "No API operation found at URL '%s'" % call)
 
 class ContentNegotiation:
     def __init__(self, base_url, local_url, context_path=None, from_triplestore=None, label_func=None):
@@ -323,6 +227,7 @@ class ContentNegotiation:
         self.context_path = context_path
 
     def GET(self, file_path=None):
+        print(f"[DEBUG] ContentNegotiation.GET called with: {file_path}")
         ldd = LinkedDataDirector(
             c["index_base_path"], c["html"], self.base_url,
             self.context_path, self.local_url,
@@ -331,7 +236,9 @@ class ContentNegotiation:
             file_split_number=int(c["file_split_number"]),
             default_dir=c["default_dir"], from_triplestore=self.from_triplestore,
             label_func=self.label_func)
+        print(f"[DEBUG] About to call redirect...")
         cur_page = ldd.redirect(file_path)
+        print(f"[DEBUG] Redirect returned: {cur_page is not None}")
         if cur_page is None:
             raise web.notfound()
         else:
@@ -360,13 +267,13 @@ class MetaContentNegotiation(ContentNegotiation):
 # Run the application
 if __name__ == "__main__":
     # Add startup log
-    print("Starting API OpenCitations web application...")
+    print("Starting LDD OpenCitations web application...")
     print(f"Configuration: Base URL={env_config['base_url']}")
     print(f"Sync enabled: {env_config['sync_enabled']}")
 
     
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description='API OpenCitations web application')
+    parser = argparse.ArgumentParser(description='LDD OpenCitations web application')
     parser.add_argument(
         '--sync-static',
         action='store_true',
