@@ -1,0 +1,12 @@
+{
+    "iri": "gdi:2",
+    "a": "index_distribution",
+    "label": "Distribution 2 of the OpenCitations Index [di/2]",
+    "title": "The Open Citations Index: N-Triples distribution of July 2024",
+    "description": "The July 2024 distribution of the Open Citations Index stored in N-Triples; contains 2,012,939,079 citations between ___ bibliographic resources",
+    "pub_date": "2024-07-01T12:00:00",
+    "license": "cc0",
+    "download": "https://doi.org/10.6084/m9.figshare.24369136.v3",
+    "file_type": "n-triples",
+    "byte": "70437463654"
+}

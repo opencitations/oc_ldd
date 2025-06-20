@@ -1,0 +1,46 @@
+{
+  "html": "html-template",
+  "log_dir": "./log/",
+  "oc_services_templates": "https://github.com/opencitations/oc_services_templates",
+  "base_url": "ldd.opencitations.net",
+  "sparql_endpoint_index": "https://sparql.opencitations.net/index",
+  "sparql_endpoint_meta": "https://sparql.opencitations.net/meta",
+
+  "index_base_url": "https://w3id.org/oc",
+  "index_base_path": "./src/data/index/",
+  "index_local_url": "/index/",
+  "meta_local_url": "/meta/",
+  "ocdm_json_context_path": "./src/data/index/context.json",
+  "tmp_dir": "/tmp/",
+  "dir_split_number": "10000",
+  "file_split_number": "1000",
+  "default_dir": "_",
+
+  "label_conf": {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type": "is a",
+    "http://xmlns.com/foaf/0.1/givenName": "given name",
+    "http://xmlns.com/foaf/0.1/familyName": "family name",
+    "http://prismstandard.org/namespaces/basic/2.0/startingPage": "first page",
+    "http://prismstandard.org/namespaces/basic/2.0/endingPage": "last page",
+    "http://purl.org/dc/terms/issued": "publication date",
+    "http://purl.org/dc/terms/modified": "modification date",
+    "http://purl.org/spar/biro/references": "references",
+    "http://www.w3.org/ns/dcat#Dataset": "dataset",
+    "http://purl.org/spar/biro/BibliographicReference": "bibliographic reference",
+    "http://purl.org/spar/c4o/denotes": "denoted bibliographic reference",
+    "http://purl.org/spar/cito/Citation": "citation",
+    "http://purl.org/spar/doco/DiscourseElement": "discourse element"
+  },
+  
+  "sync": {
+    "folders": [
+        "static/css",
+        "static/js",
+        "static/img",
+        "html-template/common"
+    ],
+    "files": [
+        "test.txt"
+    ]
+}
+}

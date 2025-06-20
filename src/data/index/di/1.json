@@ -1,0 +1,12 @@
+{
+    "iri": "gdi:1",
+    "a": "index_distribution",
+    "label": "Distribution 1 of the OpenCitations Index [di/1]",
+    "title": "The Open Citations Index: N-Triples distribution of December 2023",
+    "description": "The December 2023 distribution of the Open Citations Index stored in N-Triples; contains 1,975,552,846 citations between 89,920,081 bibliographic resources",
+    "pub_date": "2023-12-11T12:00:00",
+    "license": "cc0",
+    "download": "https://doi.org/10.6084/m9.figshare.24369136.v2",
+    "file_type": "n-triples",
+    "byte": "66894115635"
+}
