@@ -272,7 +272,7 @@ class ContentNegotiation:
         self.context_path = context_path
 
     def GET(self, file_path=None):
-        print(f"[DEBUG] ContentNegotiation.GET called with: {file_path}")
+        #print(f"[DEBUG] ContentNegotiation.GET called with: {file_path}")
         ldd = LinkedDataDirector(
             c["index_base_path"], c["html"], self.base_url,
             self.context_path, self.local_url,
@@ -281,11 +281,11 @@ class ContentNegotiation:
             file_split_number=int(c["file_split_number"]),
             default_dir=c["default_dir"], from_triplestore=self.from_triplestore,
             label_func=self.label_func)
-        print(f"[DEBUG] About to call redirect...")
+        #print(f"[DEBUG] About to call redirect...")
         
         try:
             cur_page = ldd.redirect(file_path)
-            print(f"[DEBUG] Redirect returned: {cur_page is not None}")
+            #print(f"[DEBUG] Redirect returned: {cur_page is not None}")
             if cur_page is None:
                 raise web.notfound()
             else:
@@ -293,13 +293,13 @@ class ContentNegotiation:
                 return cur_page
         except KeyError as e:
             # Resource exists in triplestore but lacks required data
-            print(f"[DEBUG] KeyError caught: {e} - treating as not found")
+            #print(f"[DEBUG] KeyError caught: {e} - treating as not found")
             raise web.notfound()  
         except web.HTTPError:
             raise
         except Exception as e:
             # Catch any other unexpected errors
-            print(f"[ERROR] Unexpected error: {type(e).__name__}: {e}")
+            #print(f"[ERROR] Unexpected error: {type(e).__name__}: {e}")
             raise web.notfound()  
 
 class IndexContentNegotiation(ContentNegotiation):
