@@ -1,7 +1,7 @@
 import web
 import os
 import json
-from src.wl import WebLogger
+#from src.wl import WebLogger
 import requests
 import urllib.parse as urlparse
 import re
@@ -50,6 +50,7 @@ active = {
 # URL Mapping
 urls = (
     '/favicon.ico', 'Favicon',
+    "/static/(.*)", "Static",
     "/sparql/index", "SparqlIndex",
     "/sparql/meta", "SparqlMeta",
     "/index/(.*)?", "IndexContentNegotiation",
@@ -58,19 +59,19 @@ urls = (
 )
 
 # Set the web logger
-web_logger = WebLogger(env_config["base_url"], env_config["log_dir"], [
-    "HTTP_X_FORWARDED_FOR", # The IP address of the client
-    "REMOTE_ADDR",          # The IP address of internal balancer
-    "HTTP_USER_AGENT",      # The browser type of the visitor
-    "HTTP_REFERER",         # The URL of the page that called your program
-    "HTTP_HOST",            # The hostname of the page being attempted
-    "REQUEST_URI",          # The interpreted pathname of the requested document
-                            # or CGI (relative to the document root)
-    "HTTP_AUTHORIZATION",   # Access token
-    ],
-    # comment this line only for test purposes
-     {"REMOTE_ADDR": ["130.136.130.1", "130.136.2.47", "127.0.0.1"]}
-)
+# web_logger = WebLogger(env_config["base_url"], env_config["log_dir"], [
+#     "HTTP_X_FORWARDED_FOR", # The IP address of the client
+#     "REMOTE_ADDR",          # The IP address of internal balancer
+#     "HTTP_USER_AGENT",      # The browser type of the visitor
+#     "HTTP_REFERER",         # The URL of the page that called your program
+#     "HTTP_HOST",            # The hostname of the page being attempted
+#     "REQUEST_URI",          # The interpreted pathname of the requested document
+#                             # or CGI (relative to the document root)
+#     "HTTP_AUTHORIZATION",   # Access token
+#     ],
+#     # comment this line only for test purposes
+#      {"REMOTE_ADDR": ["130.136.130.1", "130.136.2.47", "127.0.0.1"]}
+# )
 
 
 render = web.template.render(c["html"], globals={
@@ -79,9 +80,24 @@ render = web.template.render(c["html"], globals={
     'render': lambda *args, **kwargs: render(*args, **kwargs)
 })
 
+render_common = web.template.render(c["html"] + '/common', globals={
+    'str': str,
+    'isinstance': isinstance
+})
+
+def notfound_custom():
+    """Custom 404 page"""
+    return web.notfound(render_common.notfound(web.ctx.home + web.ctx.fullpath))
+
+
 # App Web.py
 app = web.application(urls, globals())
 
+# Custom 404 handler
+app.notfound = notfound_custom
+
+# Gunicorn WSGI application
+application = app.wsgifunc()
 
 
 def sync_static_files():
@@ -98,11 +114,40 @@ def sync_static_files():
         print(f"Unexpected error during synchronization: {e}")
 
 
-
 # Process favicon.ico requests
 class Favicon:
     def GET(self): 
         raise web.seeother("/static/favicon.ico")
+    
+class Static:
+    def GET(self, name):
+        """Serve static files"""
+        static_dir = "static"
+        file_path = os.path.join(static_dir, name)
+
+        if not os.path.exists(file_path):
+            raise web.notfound()
+
+        # Content types
+        ext = os.path.splitext(name)[1]
+        content_types = {
+            '.css': 'text/css',
+            '.js': 'application/javascript',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon',
+            '.woff': 'font/woff',
+            '.woff2': 'font/woff2',
+            '.ttf': 'font/ttf',
+        }
+
+        web.header('Content-Type', content_types.get(ext, 'application/octet-stream'))
+
+        with open(file_path, 'rb') as f:
+            return f.read()
 
 class Header:
     def GET(self):
@@ -117,7 +162,7 @@ class Sparql:
         self.collparam = ["query"]
 
     def GET(self):
-        web_logger.mes()
+        #web_logger.mes()
         content_type = web.ctx.env.get('CONTENT_TYPE')
         return self.__run_query_string(self.sparql_endpoint_title, web.ctx.env.get("QUERY_STRING"), content_type)
 
@@ -159,7 +204,7 @@ class Sparql:
                 web.header('Content-Type', 'application/sparql-results+json')
             else:
                 web.header('Content-Type', req.headers["content-type"])
-            web_logger.mes()
+            #web_logger.mes()
             req.encoding = "utf-8"
             return req.text
         else:
@@ -227,7 +272,7 @@ class ContentNegotiation:
         self.context_path = context_path
 
     def GET(self, file_path=None):
-        print(f"[DEBUG] ContentNegotiation.GET called with: {file_path}")
+        #print(f"[DEBUG] ContentNegotiation.GET called with: {file_path}")
         ldd = LinkedDataDirector(
             c["index_base_path"], c["html"], self.base_url,
             self.context_path, self.local_url,
@@ -236,14 +281,26 @@ class ContentNegotiation:
             file_split_number=int(c["file_split_number"]),
             default_dir=c["default_dir"], from_triplestore=self.from_triplestore,
             label_func=self.label_func)
-        print(f"[DEBUG] About to call redirect...")
-        cur_page = ldd.redirect(file_path)
-        print(f"[DEBUG] Redirect returned: {cur_page is not None}")
-        if cur_page is None:
-            raise web.notfound()
-        else:
-            web_logger.mes()
-            return cur_page
+        #print(f"[DEBUG] About to call redirect...")
+        
+        try:
+            cur_page = ldd.redirect(file_path)
+            #print(f"[DEBUG] Redirect returned: {cur_page is not None}")
+            if cur_page is None:
+                raise web.notfound()
+            else:
+                #web_logger.mes()
+                return cur_page
+        except KeyError as e:
+            # Resource exists in triplestore but lacks required data
+            #print(f"[DEBUG] KeyError caught: {e} - treating as not found")
+            raise web.notfound()  
+        except web.HTTPError:
+            raise
+        except Exception as e:
+            # Catch any other unexpected errors
+            #print(f"[ERROR] Unexpected error: {type(e).__name__}: {e}")
+            raise web.notfound()  
 
 class IndexContentNegotiation(ContentNegotiation):
     def __init__(self):
@@ -264,7 +321,7 @@ class MetaContentNegotiation(ContentNegotiation):
 
 
 
-# Run the application
+# Run the application on localhost for testing/development
 if __name__ == "__main__":
     # Add startup log
     print("Starting LDD OpenCitations web application...")
