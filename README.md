@@ -62,10 +62,9 @@ When static sync is enabled (via `--sync-static` or `SYNC_ENABLED=true`), the ap
 
 ## Running Options
 
-The application supports the following command line arguments:
+### Local Development
 
-- `--sync-static`: Synchronize static files at startup and enable periodic sync (every 30 minutes)
-- `--port PORT`: Specify the port to run the application on (default: 8080)
+For local development and testing, the application uses the built-in web.py HTTP server:
 
 Examples:
 ```bash
@@ -82,7 +81,28 @@ python3 ldd_oc.py --port 8085
 python3 ldd_oc.py --sync-static --port 8085
 ```
 
-The Docker container is configured to run with `--sync-static` enabled by default.
+The application supports the following command line arguments:
+
+- `--sync-static`: Synchronize static files at startup and enable periodic sync (every 30 minutes)
+- `--port PORT`: Specify the port to run the application on (default: 8080)
+
+### Production Deployment (Docker)
+
+When running in Docker/Kubernetes, the application uses **Gunicorn** as the WSGI HTTP server for better performance and concurrency handling:
+
+
+You can change these variables in the Dockerfile:
+- **Server**: Gunicorn with gevent workers
+- **Workers**: 2 concurrent worker processes
+- **Worker Type**: gevent (async) for handling thousands of simultaneous requests
+- **Timeout**: 1200 seconds (to handle long-running SPARQL queries)
+- **Connections per worker**: 800 simultaneous connections
+
+
+The Docker container automatically uses Gunicorn and is configured with static sync enabled by default.
+
+> **Note**: The application code automatically detects the execution environment. When run with `python3 ldd_oc.py`, it uses the built-in web.py server. When run with Gunicorn (as in Docker), it uses the WSGI interface.
+You can customize the Gunicorn server configuration by modifying the `gunicorn.conf.py` file.
 
 ### Dockerfile
 
@@ -101,14 +121,15 @@ ENV BASE_URL="ldd.opencitations.net" \
     SYNC_ENABLED="true" \
     INDEX_BASE_URL="https://w3id.org/oc"
 
+# Ensure Python output is unbuffered
+ENV PYTHONUNBUFFERED=1
 # Install system dependencies required for Python package compilation
 # We clean up apt cache after installation to reduce image size
 RUN apt-get update && \
     apt-get install -y \
     git \
     python3-dev \
-    build-essential && \
-    apt-get clean
+    build-essential
 
 # Set the working directory for our application
 WORKDIR /website
@@ -123,7 +144,6 @@ RUN pip install -r requirements.txt
 # Expose the port that our service will listen on
 EXPOSE 8080
 
-# Start the application
-# The Python script will now read environment variables for API configurations
-CMD ["python3", "ldd_oc.py"]
+# Start the application with gunicorn for production
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "ldd_oc:application"]
 ```
