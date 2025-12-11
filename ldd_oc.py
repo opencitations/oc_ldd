@@ -50,6 +50,7 @@ active = {
 # URL Mapping
 urls = (
     '/favicon.ico', 'Favicon',
+    "/health", "Health",
     "/static/(.*)", "Static",
     "/sparql/index", "SparqlIndex",
     "/sparql/meta", "SparqlMeta",
@@ -118,6 +119,12 @@ def sync_static_files():
 class Favicon:
     def GET(self): 
         raise web.seeother("/static/favicon.ico")
+    
+class Health:
+    """Lightweight health check endpoint for Kubernetes probes"""
+    def GET(self):
+        web.header('Content-Type', 'application/json')
+        return '{"status": "ok"}'
     
 class Static:
     def GET(self, name):
